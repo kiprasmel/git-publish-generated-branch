@@ -116,14 +116,14 @@ mv -v "$BUILD_DIR" "$TMP_BUILD_DIR"
 # ~~TODO~~ handle case where user tracks their BUILD_DIR in git (in the non-derived branch).
 # edit: wait, in that case they don't need this tool lol
 
-repo_has_untracked_changes() {
+repo_has_uncommitted_changes() {
 	local HAS=0
 	local DOES_NOT_HAVE=1
 	[ -n "$(git status -s)" ] && return $HAS || return $DOES_NOT_HAVE
 }
 
 FOUND_UNTRACKED_CHANGES_OUTSIDE_BUILD=0
-repo_has_untracked_changes && {
+repo_has_uncommitted_changes && {
 	FOUND_UNTRACKED_CHANGES_OUTSIDE_BUILD=1
 
 	git status
@@ -149,17 +149,17 @@ git rm -rf .
 
 mv -v -f "$TMP_BUILD_DIR/$BUILD_DIR"/* .
 
+git add .
+
 NO_CHANGES_IN_BUILD=0
 ALLOW_EMPTY_FLAG=()
 COMMIT_TITLE_PREFIX=""
-repo_has_untracked_changes || {
+repo_has_uncommitted_changes || {
 	printf "\nWARNING: 0 changes detected. will create an empty commit.\n\n"
 	NO_CHANGES_IN_BUILD=1
 	ALLOW_EMPTY_FLAG=("--allow-empty")
 	COMMIT_TITLE_PREFIX="(NO CHANGES) "
 }
-
-git add .
 
 cat <<EOF | git commit ${ALLOW_EMPTY_FLAG[@]} -F-
 ${COMMIT_TITLE_PREFIX}build $SOURCE_BRANCH_COMMIT from $SOURCE_BRANCH

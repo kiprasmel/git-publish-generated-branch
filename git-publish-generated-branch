@@ -18,7 +18,6 @@ optional:
     -p, --branch-prefix                    = "x-build/"
     -b, --branch                           = "{prefix}{current-branch}"
 
-        --no-exit-on-changes-outside-build = 0 (exits if changes detected outside build dir)
         --extra-commit-body                = ""
         --remote                           = origin
 
@@ -47,11 +46,6 @@ while (( $# > 0 )); do
 			shift
 			BUILD_BRANCH="$1"
 			shift
-			;;
-
-		--no-exit-on-changes-outside-build)
-		 	shift
-			EXIT_ON_CHANGES_OUTSIDE_BUILD=0
 			;;
 
 		--extra-commit-body)
@@ -132,13 +126,10 @@ repo_has_untracked_changes && {
 
 	git status
 
-	if [ "$EXIT_ON_CHANGES_OUTSIDE_BUILD" != "0" ]; then
-		printf "\nERROR: untracked changes found and "EXIT_ON_CHANGES_OUTSIDE_BUILD" was set. exiting.\n\n"
-		exit 1
-	else
-		printf "\nWARNING: untracked changes found. resetting them because "EXIT_ON_CHANGES_OUTSIDE_BUILD" was not set.\n\n"
-		git checkout -- .
-	fi
+	printf "\nWARNING: untracked changes found. resetting them.\n\n"
+	git checkout -- .
+	git add .
+	git reset --hard HEAD
 }
 
 # https://stackoverflow.com/a/31914717/9285308

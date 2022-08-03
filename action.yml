@@ -10,12 +10,15 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - run: echo "action_ref = ${{ github.action_ref }}, action_path = ${{ github.action_path }}, base_ref = ${{ github.base_ref }}."
+      shell: bash
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
         repository: kiprasmel/git-publish-generated-branch
         # https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
-        ref: ${{ github.action_ref }}
+        # ref: ${{ github.action_ref }}
+        ref: ${{ github.base_ref }}
         # https://docs.github.com/en/actions/learn-github-actions/environment-variables#default-environment-variables
         path: $RUNNER_TOOL_CACHE/git-publish-generated-branch
 

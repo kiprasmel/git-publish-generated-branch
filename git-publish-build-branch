@@ -1,0 +1,175 @@
+#!/usr/bin/env bash
+
+VERSION="0"
+
+USAGE="\
+usage:
+
+git-publish-build-branch <BUILD_DIR> --branch-prefix <PREFIX="x-build/">
+git-publish-build-branch <BUILD_DIR> --branch <FULL_NAME_OF_NEW_BRANCH="{prefix}{current-branch}">
+
+required:
+    [--dir] BUILD_DIR
+
+
+optional:
+    -p, --branch-prefix                    = "x-build/"
+    -b, --branch                           = "{prefix}{current-branch}"
+
+        --no-exit-on-changes-outside-build = 0 (exits if changes detected outside build dir)
+        --extra-commit-body                = ""
+        --remote                           = origin
+
+    -V, --version
+    -h, --help
+
+
+git-publish-build-branch v${VERSION}
+"
+
+while (( $# > 0 )); do
+	case $1 in
+		-d|--dir)
+		 	shift
+			BUILD_DIR="$1"
+			shift
+			;;
+
+		-p|--branch-prefix)
+		 	shift
+			BUILD_BRANCH_PREFIX="$1"
+			shift
+			;;
+		
+		-b|--branch)
+			shift
+			BUILD_BRANCH="$1"
+			shift
+			;;
+
+		--no-exit-on-changes-outside-build)
+		 	shift
+			EXIT_ON_CHANGES_OUTSIDE_BUILD=0
+			;;
+
+		--extra-commit-body)
+			shift
+			EXTRA_COMMIT_BODY="$1"
+			shift
+			;;
+
+		# -v|--verbose)
+		# 	shift
+		# 	VERBOSE_FLAG="-v"
+		# 	;;
+
+		-V|--version)
+			shift
+			printf "git-publish-build-branch v${VERSION}"
+			exit 0
+			;;
+
+		-h|--help)
+			shift
+			printf "$USAGE"
+			exit 0
+			;;
+
+		*)
+			if [ -z "$BUILD_DIR" ]; then
+				BUILD_DIR="$1"
+				shift
+			else
+				printf "\nunknown option "$1".\n\n"
+				exit 1
+			fi
+		;;
+	esac
+done
+
+[ -z "$BUILD_DIR" ] && {
+	printf "$USAGE"
+	exit 1
+}
+
+# both set
+[ -n "$BUILD_BRANCH" ] && [ -n "$BUILD_BRANCH_PREFIX" ] && {
+	printf "\ncannot specify both --branch-prefix and --branch; choose 1.\n\n"
+	exit 1
+}
+# neither set
+[ -z "$BUILD_BRANCH" ] && [ -z "$BUILD_BRANCH_PREFIX" ] && {
+	BUILD_BRANCH_PREFIX="x-build/"
+	CURRENT_BRANCH="$(git branch --show-current)"
+	BUILD_BRANCH="${BUILD_BRANCH_PREFIX}${CURRENT_BRANCH}"
+	unset BUILD_BRANCH_PREFIX
+	printf "\nneither --branch-prefix nor --branch specified. defaulting to ${BUILD_BRANCH}.\n\n"
+}
+
+[ -z "$EXIT_ON_CHANGES_OUTSIDE_BUILD" ] && EXIT_ON_CHANGES_OUTSIDE_BUILD=1
+[ -z "$EXTRA_COMMIT_BODY" ] && EXTRA_COMMIT_BODY=""
+
+TMP_BUILD_DIR="$(mktemp -d)"
+mv -v "$BUILD_DIR" "$TMP_BUILD_DIR"
+# ~~TODO~~ handle case where user tracks their BUILD_DIR in git (in the non-derived branch).
+# edit: wait, in that case they don't need this tool lol
+
+repo_has_untracked_changes() {
+	[ -z "$(git status -s)" ] && return 1 || return 0
+}
+
+FOUND_UNTRACKED_CHANGES_OUTSIDE_BUILD=0
+repo_has_untracked_changes && {
+	FOUND_UNTRACKED_CHANGES_OUTSIDE_BUILD=1
+
+	if [ "$EXIT_ON_CHANGES_OUTSIDE_BUILD" != "0" ]; then
+		printf "\nERROR: untracked changes found and "EXIT_ON_CHANGES_OUTSIDE_BUILD" was set. exiting.\n\n"
+		exit 1
+	else
+		printf "\nWARNING: untracked changes found. resetting them because "EXIT_ON_CHANGES_OUTSIDE_BUILD" was not set.\n\n"
+		git checkout -- .
+	fi
+}
+
+# https://stackoverflow.com/a/31914717/9285308
+if git rev-parse --quiet --verify "origin/$BUILD_BRANCH"; then
+	echo "remote branch __does__ exist"
+	git checkout "$BUILD_BRANCH"
+	git pull --rebase
+else
+	echo "remote branch __does NOT__ exist"
+	git checkout --orphan "$BUILD_BRANCH"
+fi
+
+git clean -xdf
+git rm -rf .
+
+mv -v -f "$TMP_BUILD_DIR/$BUILD_DIR"/* .
+
+NO_CHANGES_IN_BUILD=0
+ALLOW_EMPTY_FLAG=""
+COMMIT_TITLE_PREFIX=""
+repo_has_untracked_changes || {
+	printf "\nWARNING: 0 changes detected. will create an empty commit.\n\n"
+	NO_CHANGES_IN_BUILD=1
+	ALLOW_EMPTY_FLAG="--allow-empty"
+	COMMIT_TITLE_PREFIX="(NO CHANGES) "
+}
+
+git add .
+
+BRANCH_COMMIT="$(git rev-parse "$BRANCH")"
+
+cat <<EOF | git commit $ALLOW_EMPTY_FLAG -F-
+${COMMIT_TITLE_PREFIX}build $BRANCH_COMMIT from $BRANCH
+
+---
+NETWORK_OVERRIDES_BOT_VERSION: 0
+FOUND_UNTRACKED_CHANGES_OUTSIDE_BUILD: $FOUND_UNTRACKED_CHANGES_OUTSIDE_BUILD
+NO_CHANGES_IN_BUILD: $NO_CHANGES_IN_BUILD
+---
+
+$EXTRA_COMMIT_BODY
+EOF
+
+git -c push.autoSetupRemote=true push --force

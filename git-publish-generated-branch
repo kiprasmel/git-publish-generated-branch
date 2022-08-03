@@ -117,7 +117,9 @@ mv -v "$BUILD_DIR" "$TMP_BUILD_DIR"
 # edit: wait, in that case they don't need this tool lol
 
 repo_has_untracked_changes() {
-	[ -z "$(git status -s)" ] && return 1 || return 0
+	local HAS=0
+	local DOES_NOT_HAVE=1
+	[ -n "$(git status -s)" ] && return $HAS || return $DOES_NOT_HAVE
 }
 
 FOUND_UNTRACKED_CHANGES_OUTSIDE_BUILD=0

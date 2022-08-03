@@ -157,12 +157,12 @@ git rm -rf .
 mv -v -f "$TMP_BUILD_DIR/$BUILD_DIR"/* .
 
 NO_CHANGES_IN_BUILD=0
-ALLOW_EMPTY_FLAG=""
+ALLOW_EMPTY_FLAG=()
 COMMIT_TITLE_PREFIX=""
 repo_has_untracked_changes || {
 	printf "\nWARNING: 0 changes detected. will create an empty commit.\n\n"
 	NO_CHANGES_IN_BUILD=1
-	ALLOW_EMPTY_FLAG="--allow-empty"
+	ALLOW_EMPTY_FLAG=("--allow-empty")
 	COMMIT_TITLE_PREFIX="(NO CHANGES) "
 }
 
@@ -170,7 +170,7 @@ git add .
 
 BRANCH_COMMIT="$(git rev-parse "$BRANCH")"
 
-cat <<EOF | git commit $ALLOW_EMPTY_FLAG -F-
+cat <<EOF | git commit ${ALLOW_EMPTY_FLAG[@]} -F-
 ${COMMIT_TITLE_PREFIX}build $BRANCH_COMMIT from $BRANCH
 
 ---

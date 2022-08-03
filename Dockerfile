@@ -1,4 +1,4 @@
-FROM bash:4.4
+FROM ubuntu:22.04
 
 COPY dockerfile-entrypoint.sh /dockerfile-entrypoint.sh
 COPY git-publish-generated-branch /git-publish-generated-branch

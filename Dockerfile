@@ -1,5 +1,7 @@
-FROM alpine:3.16
+FROM bash:4.4
 
+COPY dockerfile-entrypoint.sh /dockerfile-entrypoint.sh
 COPY git-publish-generated-branch /git-publish-generated-branch
 
-ENTRYPOINT ["/git-publish-generated-branch"]
+CMD [ "/git-publish-generated-branch" ]
+ENTRYPOINT ["/dockerfile-entrypoint.sh"]

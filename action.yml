@@ -16,7 +16,8 @@ runs:
         repository: kiprasmel/git-publish-generated-branch
         # https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
         ref: ${{ github.action_ref }}
-        path: git-publish-generated-branch
+        # https://docs.github.com/en/actions/learn-github-actions/environment-variables#default-environment-variables
+        path: $RUNNER_TOOL_CACHE/git-publish-generated-branch
 
-    - run: ./git-publish-generated-branch/git-publish-generated-branch ${{ inputs.ARGS }}
+    - run: $RUNNER_TOOL_CACHE/git-publish-generated-branch/git-publish-generated-branch ${{ inputs.ARGS }}
       shell: bash

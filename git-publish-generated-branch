@@ -93,8 +93,8 @@ SOURCE_BRANCH_COMMIT="$(git rev-parse "$SOURCE_BRANCH")"
 
 # both set
 [ -n "$BUILD_BRANCH" ] && [ -n "$BUILD_BRANCH_PREFIX" ] && {
-	printf "\ncannot specify both --branch-prefix and --branch; choose 1.\n\n"
-	exit 1
+	>&2 printf "\nWARNING: both --branch-prefix and --branch were specified; ignoring --branch-prefix.\n\n"
+	unset BUILD_BRANCH_PREFIX
 }
 # only prefix set
 [ -z "$BUILD_BRANCH" ] && [ -n "$BUILD_BRANCH_PREFIX" ] && {

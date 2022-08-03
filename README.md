@@ -47,10 +47,43 @@ git-publish-generated-branch v0
 ## Usage as GitHub Action
 
 ```yml
-jobs:
-  your-job:
+# your-workflow.yml
+
+name: <your-workflow>
+
+on:
+  workflow_dispatch:
+    # manual trigger
+  push:
+    # on push to any branch, excluding our generated ones
+    branches-ignore:
+      - 'x-build/*'
+
+      # TODO - will need this after testing.
+      # or a general way to specify the default branch.
+      # because too much activity, even w/ pull --rebase,
+      # can become incorrect.
+      # and in general, u shouldn't need to load from master,
+      # since it's what's in production already.
+      #
+      # - "master"
+
+jobs:	
+  build:
+    runs-on: ubuntu-latest
+
     steps:
-      # checkout code
+      - uses: actions/checkout@v2
+        with:
+          # see https://github.com/actions/checkout/issues/217
+          # TODO optimise perf?
+          # TODO also fix for v3, because currently works only with v2 (because of https://github.com/actions/checkout/issues/217#issuecomment-634802933 )
+          fetch-depth: 0
+
+      - run: |
+          git config --global user.email "network-overrides+v0@example.com"
+          git config --global user.name "network-overrides-bot"
+
       # setup project
       # install deps
       # create the "build" folder

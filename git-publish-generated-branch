@@ -94,6 +94,8 @@ done
 	exit 1
 }
 
+CURRENT_BRANCH="$(git branch --show-current)"
+
 # both set
 [ -n "$BUILD_BRANCH" ] && [ -n "$BUILD_BRANCH_PREFIX" ] && {
 	printf "\ncannot specify both --branch-prefix and --branch; choose 1.\n\n"
@@ -101,14 +103,12 @@ done
 }
 # only prefix set
 [ -z "$BUILD_BRANCH" ] && [ -n "$BUILD_BRANCH_PREFIX" ] && {
-	CURRENT_BRANCH="$(git branch --show-current)"
 	BUILD_BRANCH="${BUILD_BRANCH_PREFIX}${CURRENT_BRANCH}"
 	unset BUILD_BRANCH_PREFIX
 }
 # neither set
 [ -z "$BUILD_BRANCH" ] && [ -z "$BUILD_BRANCH_PREFIX" ] && {
 	BUILD_BRANCH_PREFIX="x-build/"
-	CURRENT_BRANCH="$(git branch --show-current)"
 	BUILD_BRANCH="${BUILD_BRANCH_PREFIX}${CURRENT_BRANCH}"
 	unset BUILD_BRANCH_PREFIX
 	printf "\nneither --branch-prefix nor --branch specified. defaulting to ${BUILD_BRANCH}.\n\n"
@@ -168,10 +168,10 @@ repo_has_untracked_changes || {
 
 git add .
 
-BRANCH_COMMIT="$(git rev-parse "$BRANCH")"
+BRANCH_COMMIT="$(git rev-parse "$CURRENT_BRANCH")"
 
 cat <<EOF | git commit ${ALLOW_EMPTY_FLAG[@]} -F-
-${COMMIT_TITLE_PREFIX}build $BRANCH_COMMIT from $BRANCH
+${COMMIT_TITLE_PREFIX}build $BRANCH_COMMIT from $CURRENT_BRANCH
 
 ---
 NETWORK_OVERRIDES_BOT_VERSION: 0

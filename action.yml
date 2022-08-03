@@ -8,7 +8,14 @@ inputs:
     default: ""
 
 runs:
-  using: "docker"
-  image: "Dockerfile"
-  args:
-    - ${{ inputs.ARGS }}
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - run: |
+        pwd
+        ls -la
+      shell: bash
+    - run: git-publish-generated-branch ${{ inputs.ARGS }}
+      shell: bash

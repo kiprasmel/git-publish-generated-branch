@@ -44,6 +44,25 @@ optional:
 git-publish-generated-branch v0
 ```
 
+## Usage as GitHub Action
+
+```yml
+jobs:
+  your-job:
+    steps:
+      # checkout code
+      # setup project
+      # install deps
+      # create the "build" folder
+
+      # and then:
+
+      - uses: kiprasmel/git-publish-generated-branch@v0
+        with:
+          ARGS: '--dir "build" --branch-prefix "x-build/"'
+
+```
+
 ## Background
 
 this tool works similarly to how github pages create another branch "gh-pages" and store static contents directly there, such that they're available on `<username>.github.io/`.

@@ -1,0 +1,16 @@
+name: "git-publish-generated-branch"
+description: "create & update derived git branches for hosting generated content"
+
+inputs:
+  ARGS:
+    description: "args to pass to the git-publish-generated-branch CLI"
+    required: true
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+      # https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
+      # https://kiprasmel.github.io/notes/github%20actions.html#r24o9VriF
+    - run: ${{ github.action_path }}/git-publish-generated-branch ${{ inputs.ARGS }}
+      shell: bash

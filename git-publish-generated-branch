@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 
+set -e
+
 VERSION="0"
 
 USAGE="\
 usage:
 
 git-publish-generated-branch <BUILD_DIR> --branch-prefix <PREFIX="x-build/">
-git-publish-generated-branch <BUILD_DIR> --branch <FULL_NAME_OF_NEW_BRANCH="{prefix}{current-branch}">
+git-publish-generated-branch <BUILD_DIR> --branch <FULL_NAME_OF_NEW_BRANCH="{prefix}{source-branch}">
 
 required:
     [--dir] BUILD_DIR
@@ -14,9 +16,8 @@ required:
 
 optional:
     -p, --branch-prefix                    = "x-build/"
-    -b, --branch                           = "{prefix}{current-branch}"
+    -b, --branch                           = "{prefix}{source-branch}"
 
-        --no-exit-on-changes-outside-build = 0 (exits if changes detected outside build dir)
         --extra-commit-body                = ""
         --remote                           = origin
 
@@ -45,11 +46,6 @@ while (( $# > 0 )); do
 			shift
 			BUILD_BRANCH="$1"
 			shift
-			;;
-
-		--no-exit-on-changes-outside-build)
-		 	shift
-			EXIT_ON_CHANGES_OUTSIDE_BUILD=0
 			;;
 
 		--extra-commit-body)
@@ -92,21 +88,27 @@ done
 	exit 1
 }
 
+SOURCE_BRANCH="$(git branch --show-current)"
+SOURCE_BRANCH_COMMIT="$(git rev-parse "$SOURCE_BRANCH")"
+
 # both set
 [ -n "$BUILD_BRANCH" ] && [ -n "$BUILD_BRANCH_PREFIX" ] && {
 	printf "\ncannot specify both --branch-prefix and --branch; choose 1.\n\n"
 	exit 1
 }
+# only prefix set
+[ -z "$BUILD_BRANCH" ] && [ -n "$BUILD_BRANCH_PREFIX" ] && {
+	BUILD_BRANCH="${BUILD_BRANCH_PREFIX}${SOURCE_BRANCH}"
+	unset BUILD_BRANCH_PREFIX
+}
 # neither set
 [ -z "$BUILD_BRANCH" ] && [ -z "$BUILD_BRANCH_PREFIX" ] && {
 	BUILD_BRANCH_PREFIX="x-build/"
-	CURRENT_BRANCH="$(git branch --show-current)"
-	BUILD_BRANCH="${BUILD_BRANCH_PREFIX}${CURRENT_BRANCH}"
+	BUILD_BRANCH="${BUILD_BRANCH_PREFIX}${SOURCE_BRANCH}"
 	unset BUILD_BRANCH_PREFIX
 	printf "\nneither --branch-prefix nor --branch specified. defaulting to ${BUILD_BRANCH}.\n\n"
 }
 
-[ -z "$EXIT_ON_CHANGES_OUTSIDE_BUILD" ] && EXIT_ON_CHANGES_OUTSIDE_BUILD=1
 [ -z "$EXTRA_COMMIT_BODY" ] && EXTRA_COMMIT_BODY=""
 
 TMP_BUILD_DIR="$(mktemp -d)"
@@ -122,13 +124,12 @@ FOUND_UNTRACKED_CHANGES_OUTSIDE_BUILD=0
 repo_has_untracked_changes && {
 	FOUND_UNTRACKED_CHANGES_OUTSIDE_BUILD=1
 
-	if [ "$EXIT_ON_CHANGES_OUTSIDE_BUILD" != "0" ]; then
-		printf "\nERROR: untracked changes found and "EXIT_ON_CHANGES_OUTSIDE_BUILD" was set. exiting.\n\n"
-		exit 1
-	else
-		printf "\nWARNING: untracked changes found. resetting them because "EXIT_ON_CHANGES_OUTSIDE_BUILD" was not set.\n\n"
-		git checkout -- .
-	fi
+	git status
+
+	printf "\nWARNING: untracked changes found. resetting them.\n\n"
+	git checkout -- .
+	git add .
+	git reset --hard HEAD
 }
 
 # https://stackoverflow.com/a/31914717/9285308
@@ -147,21 +148,19 @@ git rm -rf .
 mv -v -f "$TMP_BUILD_DIR/$BUILD_DIR"/* .
 
 NO_CHANGES_IN_BUILD=0
-ALLOW_EMPTY_FLAG=""
+ALLOW_EMPTY_FLAG=()
 COMMIT_TITLE_PREFIX=""
 repo_has_untracked_changes || {
 	printf "\nWARNING: 0 changes detected. will create an empty commit.\n\n"
 	NO_CHANGES_IN_BUILD=1
-	ALLOW_EMPTY_FLAG="--allow-empty"
+	ALLOW_EMPTY_FLAG=("--allow-empty")
 	COMMIT_TITLE_PREFIX="(NO CHANGES) "
 }
 
 git add .
 
-BRANCH_COMMIT="$(git rev-parse "$BRANCH")"
-
-cat <<EOF | git commit $ALLOW_EMPTY_FLAG -F-
-${COMMIT_TITLE_PREFIX}build $BRANCH_COMMIT from $BRANCH
+cat <<EOF | git commit ${ALLOW_EMPTY_FLAG[@]} -F-
+${COMMIT_TITLE_PREFIX}build $SOURCE_BRANCH_COMMIT from $SOURCE_BRANCH
 
 ---
 NETWORK_OVERRIDES_BOT_VERSION: 0

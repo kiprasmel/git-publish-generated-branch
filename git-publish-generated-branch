@@ -124,6 +124,8 @@ FOUND_UNTRACKED_CHANGES_OUTSIDE_BUILD=0
 repo_has_untracked_changes && {
 	FOUND_UNTRACKED_CHANGES_OUTSIDE_BUILD=1
 
+	git status
+
 	if [ "$EXIT_ON_CHANGES_OUTSIDE_BUILD" != "0" ]; then
 		printf "\nERROR: untracked changes found and "EXIT_ON_CHANGES_OUTSIDE_BUILD" was set. exiting.\n\n"
 		exit 1

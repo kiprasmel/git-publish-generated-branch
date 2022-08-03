@@ -99,6 +99,12 @@ done
 	printf "\ncannot specify both --branch-prefix and --branch; choose 1.\n\n"
 	exit 1
 }
+# only prefix set
+[ -z "$BUILD_BRANCH" ] && [ -n "$BUILD_BRANCH_PREFIX" ] && {
+	CURRENT_BRANCH="$(git branch --show-current)"
+	BUILD_BRANCH="${BUILD_BRANCH_PREFIX}${CURRENT_BRANCH}"
+	unset BUILD_BRANCH_PREFIX
+}
 # neither set
 [ -z "$BUILD_BRANCH" ] && [ -z "$BUILD_BRANCH_PREFIX" ] && {
 	BUILD_BRANCH_PREFIX="x-build/"

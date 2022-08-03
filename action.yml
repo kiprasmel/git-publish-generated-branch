@@ -13,9 +13,9 @@ runs:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
-    - run: |
-        pwd
-        ls -la
-      shell: bash
-    - run: git-publish-generated-branch ${{ inputs.ARGS }}
+        repository: kiprasmel/git-publish-generated-branch
+        ref: v0
+        path: git-publish-generated-branch
+
+    - run: ./git-publish-generated-branch/git-publish-generated-branch ${{ inputs.ARGS }}
       shell: bash

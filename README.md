@@ -1,4 +1,4 @@
-# git-publish-build-branch
+# git-publish-generated-branch
 
 situation:
 
@@ -6,7 +6,7 @@ situation:
 - you want to store this generated output in a different branch,
 - you want these contents to be right at the root of the repository (so that the output path is inlined / other tools don't need to know it, & instead they only need the branch name)
 
-here, you can use git-publish-build-branch.
+here, you can use git-publish-generated-branch.
 
 - it expects that you've generated your build,
 - takes it's path,
@@ -18,12 +18,12 @@ here, you can use git-publish-build-branch.
 ## Usage
 
 ```sh
-$ git-publish-build-branch --help
+$ git-publish-generated-branch --help
 
 usage:
 
-git-publish-build-branch <BUILD_DIR> --branch-prefix <PREFIX="x-build/">
-git-publish-build-branch <BUILD_DIR> --branch <FULL_NAME_OF_NEW_BRANCH="{prefix}{current-branch}">
+git-publish-generated-branch <BUILD_DIR> --branch-prefix <PREFIX="x-build/">
+git-publish-generated-branch <BUILD_DIR> --branch <FULL_NAME_OF_NEW_BRANCH="{prefix}{current-branch}">
 
 required:
     [--dir] BUILD_DIR
@@ -41,7 +41,7 @@ optional:
     -h, --help
 
 
-git-publish-build-branch v0
+git-publish-generated-branch v0
 ```
 
 ## Background

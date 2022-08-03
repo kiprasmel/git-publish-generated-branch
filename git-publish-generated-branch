@@ -5,8 +5,8 @@ VERSION="0"
 USAGE="\
 usage:
 
-git-publish-build-branch <BUILD_DIR> --branch-prefix <PREFIX="x-build/">
-git-publish-build-branch <BUILD_DIR> --branch <FULL_NAME_OF_NEW_BRANCH="{prefix}{current-branch}">
+git-publish-generated-branch <BUILD_DIR> --branch-prefix <PREFIX="x-build/">
+git-publish-generated-branch <BUILD_DIR> --branch <FULL_NAME_OF_NEW_BRANCH="{prefix}{current-branch}">
 
 required:
     [--dir] BUILD_DIR
@@ -24,7 +24,7 @@ optional:
     -h, --help
 
 
-git-publish-build-branch v${VERSION}
+git-publish-generated-branch v${VERSION}
 "
 
 while (( $# > 0 )); do
@@ -65,7 +65,7 @@ while (( $# > 0 )); do
 
 		-V|--version)
 			shift
-			printf "git-publish-build-branch v${VERSION}"
+			printf "git-publish-generated-branch v${VERSION}"
 			exit 0
 			;;
 
